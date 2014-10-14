@@ -8,7 +8,7 @@ First we unzip the dataset file and read the csv.
 unzip("activity.zip")
 raw_data <- read.csv("activity.csv", colClasses=c("numeric", "Date", "numeric"))
 ```
-We then turn the internval value into the number of minutes since midnight to the start of the interval.
+We then turn the interval value into the number of minutes since midnight to the start of the interval.
 
 ```r
 data <- transform(raw_data, interval_num= interval %/% 100 * 60 
@@ -19,13 +19,18 @@ data$interval <- factor(data$interval)
 
 ## What is mean total number of steps taken per day?
 
+Histogram of the total number of steps taken each day:
 
 ```r
 daily_steps <- tapply(data$steps[!is.na(data$steps)], data$date[!is.na(data$steps)], sum)
-hist(daily_steps)
+hist(daily_steps, xlab="Total number of steps in a day", 
+     main="Histogram of the total number of steps taken each day")
 ```
 
 ![plot of chunk unnamed-chunk-3](./PA1_template_files/figure-html/unnamed-chunk-3.png) 
+
+
+Mean:
 
 ```r
 mean(daily_steps)
@@ -34,6 +39,9 @@ mean(daily_steps)
 ```
 ## [1] 10766
 ```
+
+
+Median:
 
 ```r
 median(daily_steps)
@@ -49,11 +57,14 @@ median(daily_steps)
 
 ```r
 avg <- tapply(data$steps[!is.na(data$steps)], data$interval_num[!is.na(data$steps)], mean)
-plot(names(avg), avg, type = "l", xaxt="n", ylab="average number of steps", xlab="time")
+plot(names(avg), avg, type = "l", xaxt="n", ylab="Average number of steps", xlab="Time", 
+     main="Time series plot of the average number of steps taken, averaged across all days")
 axis(1, at=180 * (0:8), labels = paste(3 * 0:8, ":00"), las=2)
 ```
 
-![plot of chunk unnamed-chunk-4](./PA1_template_files/figure-html/unnamed-chunk-4.png) 
+![plot of chunk unnamed-chunk-6](./PA1_template_files/figure-html/unnamed-chunk-6.png) 
+
+Interval containing the maximum number of steps:
 
 ```r
 interval_num_max <- names(which.max(avg))
@@ -83,13 +94,14 @@ data_filled <- data
 data_filled$steps[is.na(data$steps)] <- avg[as.character(data$interval_num[is.na(data$steps)])]
 ```
 
+Recalculation of the histogram of the daily totals, mean and median after filling in the missing values:
 
 ```r
 daily_steps_filled <- tapply(data_filled$steps, data_filled$date, sum)
 hist(daily_steps_filled)
 ```
 
-![plot of chunk unnamed-chunk-7](./PA1_template_files/figure-html/unnamed-chunk-7.png) 
+![plot of chunk unnamed-chunk-10](./PA1_template_files/figure-html/unnamed-chunk-10.png) 
 
 ```r
 mean(daily_steps_filled)
@@ -124,20 +136,20 @@ setdiff(names(daily_steps_filled), names(daily_steps))
 
 
 ```r
-Sys.setlocale(category = "LC_MEASUREMENT", locale = "en_US.UTF-8")
-```
-
-```
-## [1] "en_US.UTF-8"
-```
-
-```r
-f <- function(x) {if(weekdays(x) %in% c("Saturday", "Sunday", "samedi", "dimanche")) "weekend" else "weekday"}
+f <- function(x) {
+  if(tolower(weekdays(x)) %in% c("saturday", "sunday", "samedi", "dimanche")) 
+    "weekend" 
+  else 
+    "weekday"
+  }
 data_filled <- within(data_filled, w <- lapply(date, f))
 data_filled$w <- factor(unlist(data_filled$w))
 library(lattice)
 avg <- aggregate(steps ~ interval_num * w, data_filled, mean)
-xyplot(steps ~ interval_num | w, avg, type="l", scales=list(x=list(at=seq(0, 1440, 180), labels=paste(3 * 0:8, ":00"), rot=60)), xlab="interval", ylab="Average number of steps", main="Weekday/weekend activity", layout=c(1,2))
+xyplot(steps ~ interval_num | w, avg, type="l", scales=list(x=list(at=seq(0, 1440, 180),
+       labels=paste(3 * 0:8, ":00"), rot=60)), 
+       xlab="interval", ylab="Average number of steps", 
+       main="Weekday/weekend activity", layout=c(1,2))
 ```
 
-![plot of chunk unnamed-chunk-9](./PA1_template_files/figure-html/unnamed-chunk-9.png) 
+![plot of chunk unnamed-chunk-12](./PA1_template_files/figure-html/unnamed-chunk-12.png) 
